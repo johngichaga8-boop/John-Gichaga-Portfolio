@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Budget Tracker | John Gichaga</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:     #0D1B2A;
+      --navy-mid: #1A2E44;
+      --white:    #FFFFFF;
+      --mist:     #F0F4FA;
+      --mist2:    #E2E8F4;
+      --slate:    #4A6080;
+      --silver:   #8A9BB5;
+      --border:   rgba(13,27,42,0.08);
+      --accent:   #E8A020;
+      --accent-d: #C4861A;
+      --green:    #16A34A;
+      --green-bg: #DCFCE7;
+      --red:      #DC2626;
+      --red-bg:   #FEE2E2;
+      --shadow:   0 2px 8px rgba(13,27,42,0.08);
+      --shadow-md:0 8px 32px rgba(13,27,42,0.12);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--mist);
+      color: var(--navy);
+      min-height: 100vh;
+      padding: 28px 16px 60px;
+    }
+
+    /* ── Header ── */
+    .page-header { text-align: center; margin-bottom: 28px; }
+    .page-header__label {
+      font-size: 0.72rem; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 8px;
+    }
+    .page-header h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      color: var(--navy); line-height: 1.1;
+    }
+    .page-header h1 em { color: var(--accent); font-style: italic; }
+    .page-header p { color: var(--slate); font-size: 0.88rem; margin-top: 8px; }
+
+    /* ── Layout ── */
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* ── Summary cards ── */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 560px) { .summary-grid { grid-template-columns: 1fr; } }
+
+    .summary-card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .summary-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+    }
+    .summary-card--income::before  { background: var(--green); }
+    .summary-card--expense::before { background: var(--red); }
+    .summary-card--balance::before { background: var(--accent); }
+
+    .summary-card__label {
+      font-size: 0.72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.12em;
+      color: var(--silver); margin-bottom: 8px;
+    }
+    .summary-card__amount {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.9rem; line-height: 1;
+    }
+    .summary-card--income  .summary-card__amount { color: var(--green); }
+    .summary-card--expense .summary-card__amount { color: var(--red); }
+    .summary-card--balance .summary-card__amount { color: var(--navy); }
+
+    .summary-card__sub { font-size: 0.75rem; color: var(--silver); margin-top: 4px; }
+
+    /* ── Main grid ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 16px;
+    }
+    @media (max-width: 640px) { .main-grid { grid-template-columns: 1fr; } }
+
+    /* ── Card ── */
+    .card {
+      background: var(--white);
+      border-radius: 14px;
+      padding: 22px;
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 16px;
+    }
+    .card h3 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.05rem;
+      margin-bottom: 16px;
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ── Form ── */
+    .field { margin-bottom: 11px; }
+    .field label { font-size: 0.75rem; font-weight: 600; color: var(--slate); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
+    .field input, .field select {
+      font-family: 'DM Sans', sans-serif;
+      width: 100%; padding: 10px 12px; font-size: 0.88rem;
+      background: var(--mist); border: 1.5px solid transparent;
+      border-radius: 8px; outline: none; color: var(--navy);
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .field input:focus, .field select:focus {
+      border-color: var(--accent); background: var(--white);
+      box-shadow: 0 0 0 3px rgba(232,160,32,0.12);
+    }
+
+    .type-toggle {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      margin-bottom: 11px;
+    }
+    .type-btn {
+      padding: 10px;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      background: var(--mist);
+      color: var(--slate);
+    }
+    .type-btn.active-income  { background: var(--green-bg); border-color: var(--green); color: var(--green); }
+    .type-btn.active-expense { background: var(--red-bg);   border-color: var(--red);   color: var(--red);   }
+
+    .add-btn {
+      width: 100%; padding: 12px;
+      background: var(--accent); color: var(--navy);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.88rem; font-weight: 700;
+      border: none; border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.15s;
+      margin-top: 4px;
+    }
+    .add-btn:hover { background: var(--accent-d); transform: translateY(-1px); }
+
+    /* ── Transactions list ── */
+    .tx-filters {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+    .filter-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600;
+      border: 1.5px solid var(--border);
+      cursor: pointer;
+      background: var(--mist);
+      color: var(--slate);
+      transition: all 0.2s;
+    }
+    .filter-btn.active { background: var(--navy); border-color: var(--navy); color: var(--white); }
+
+    .tx-list { display: flex; flex-direction: column; gap: 8px; max-height: 420px; overflow-y: auto; }
+    .tx-list::-webkit-scrollbar { width: 4px; }
+    .tx-list::-webkit-scrollbar-thumb { background: var(--mist2); border-radius: 4px; }
+
+    .tx-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      background: var(--mist);
+      border-radius: 10px;
+      animation: txIn 0.25s ease-out;
+      transition: transform 0.2s;
+    }
+    .tx-item:hover { transform: translateX(3px); }
+    @keyframes txIn {
+      from { opacity: 0; transform: translateX(-12px); }
+      to   { opacity: 1; transform: none; }
+    }
+    .tx-icon {
+      width: 38px; height: 38px; border-radius: 10px;
+      display: grid; place-items: center;
+      font-size: 1rem; flex-shrink: 0;
+    }
+    .tx-main { flex: 1; min-width: 0; }
+    .tx-desc {
+      font-size: 0.88rem; font-weight: 600; color: var(--navy);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .tx-meta { font-size: 0.72rem; color: var(--silver); margin-top: 1px; }
+    .tx-amount {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem; font-weight: 600; flex-shrink: 0;
+    }
+    .tx-amount.income  { color: var(--green); }
+    .tx-amount.expense { color: var(--red); }
+    .tx-del {
+      background: none; border: none;
+      color: var(--silver); cursor: pointer; font-size: 0.9rem;
+      padding: 4px; border-radius: 4px;
+      transition: color 0.15s;
+    }
+    .tx-del:hover { color: var(--red); }
+
+    .empty-state {
+      text-align: center; padding: 32px 16px;
+      color: var(--silver); font-size: 0.85rem;
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 8px; }
+
+    /* ── Category breakdown ── */
+    .cat-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .cat-label { font-size: 0.82rem; font-weight: 500; color: var(--navy); width: 110px; flex-shrink: 0; }
+    .cat-bar-wrap { flex: 1; height: 8px; background: var(--mist2); border-radius: 4px; overflow: hidden; }
+    .cat-bar { height: 100%; border-radius: 4px; transition: width 0.8s cubic-bezier(0.22,1,0.36,1); }
+    .cat-amount { font-size: 0.78rem; font-weight: 600; color: var(--slate); min-width: 60px; text-align: right; }
+
+    .back-link { text-align: center; margin-top: 28px; font-size: 0.82rem; color: var(--silver); }
+    .back-link a { color: var(--accent); text-decoration: none; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <p class="page-header__label">Project by John Gichaga</p>
+    <h1>Budget &amp; Expense<br /><em>Tracker</em></h1>
+    <p>Track your income and expenses, see where your money goes</p>
+  </div>
+
+  <div class="container">
+
+    <!-- Summary -->
+    <div class="summary-grid">
+      <div class="summary-card summary-card--income">
+        <div class="summary-card__label">Total Income</div>
+        <div class="summary-card__amount" id="totalIncome">KES 0</div>
+        <div class="summary-card__sub" id="incomeCount">0 transactions</div>
+      </div>
+      <div class="summary-card summary-card--expense">
+        <div class="summary-card__label">Total Expenses</div>
+        <div class="summary-card__amount" id="totalExpense">KES 0</div>
+        <div class="summary-card__sub" id="expenseCount">0 transactions</div>
+      </div>
+      <div class="summary-card summary-card--balance">
+        <div class="summary-card__label">Balance</div>
+        <div class="summary-card__amount" id="balance">KES 0</div>
+        <div class="summary-card__sub" id="balanceNote">—</div>
+      </div>
+    </div>
+
+    <div class="main-grid">
+
+      <!-- Add transaction -->
+      <div>
+        <div class="card">
+          <h3>➕ Add Transaction</h3>
+
+          <div class="type-toggle">
+            <button class="type-btn active-income" id="btn-income"  onclick="setType('income')">▲ Income</button>
+            <button class="type-btn"              id="btn-expense" onclick="setType('expense')">▼ Expense</button>
+          </div>
+
+          <div class="field">
+            <label>Description</label>
+            <input type="text" id="txDesc" placeholder="e.g. Tutoring fee" maxlength="40" />
+          </div>
+          <div class="field">
+            <label>Amount (KES)</label>
+            <input type="number" id="txAmount" placeholder="0.00" min="0" step="0.01" />
+          </div>
+          <div class="field">
+            <label>Category</label>
+            <select id="txCategory"></select>
+          </div>
+          <div class="field">
+            <label>Date</label>
+            <input type="date" id="txDate" />
+          </div>
+
+          <button class="add-btn" onclick="addTransaction()">Add Transaction</button>
+        </div>
+
+        <!-- Category breakdown -->
+        <div class="card">
+          <h3>📊 By Category</h3>
+          <div id="catBreakdown">
+            <p style="font-size:0.8rem;color:var(--silver)">No expenses yet.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transactions -->
+      <div class="card" style="margin-bottom:0">
+        <h3>📋 Transactions</h3>
+        <div class="tx-filters">
+          <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+          <button class="filter-btn" onclick="setFilter('income', this)">Income</button>
+          <button class="filter-btn" onclick="setFilter('expense', this)">Expense</button>
+        </div>
+        <div class="tx-list" id="txList">
+          <div class="empty-state">
+            <div class="icon">💳</div>
+            <p>No transactions yet.<br />Add one to get started!</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <p class="back-link">Built by <a href="index.html">John Gichaga</a> · Portfolio Project</p>
+
+  <script>
+    const INCOME_CATS = ['Salary / Teaching', 'Tutoring Fees', 'Freelance Work', 'Business Income', 'Other Income']
+    const EXPENSE_CATS = ['Food & Groceries', 'Transport', 'Rent & Utilities', 'School / Fees', 'Entertainment', 'Healthcare', 'Clothing', 'Savings / Investment', 'Other']
+
+    const CAT_COLORS = [
+      '#3B82F6','#8B5CF6','#EC4899','#10B981',
+      '#F59E0B','#EF4444','#06B6D4','#84CC16','#6366F1','#F97316'
+    ]
+    const CAT_ICONS = {
+      'Salary / Teaching': '💼', 'Tutoring Fees': '📚', 'Freelance Work': '💻',
+      'Business Income': '🏢', 'Other Income': '💰',
+      'Food & Groceries': '🛒', 'Transport': '🚗', 'Rent & Utilities': '🏠',
+      'School / Fees': '🎓', 'Entertainment': '🎬', 'Healthcare': '💊',
+      'Clothing': '👕', 'Savings / Investment': '📈', 'Other': '📌'
+    }
+
+    let transactions = JSON.parse(localStorage.getItem('jg_budget') || '[]')
+    let currentType = 'income'
+    let currentFilter = 'all'
+    let nextId = Date.now()
+
+    // Init date
+    document.getElementById('txDate').value = new Date().toISOString().split('T')[0]
+
+    // ── Type toggle ──
+    function setType(type) {
+      currentType = type
+      document.getElementById('btn-income').className  = 'type-btn' + (type === 'income'  ? ' active-income'  : '')
+      document.getElementById('btn-expense').className = 'type-btn' + (type === 'expense' ? ' active-expense' : '')
+      populateCategories()
+    }
+
+    function populateCategories() {
+      const sel = document.getElementById('txCategory')
+      const cats = currentType === 'income' ? INCOME_CATS : EXPENSE_CATS
+      sel.innerHTML = cats.map(c => `<option>${c}</option>`).join('')
+    }
+
+    // ── Add transaction ──
+    function addTransaction() {
+      const desc   = document.getElementById('txDesc').value.trim()
+      const amount = parseFloat(document.getElementById('txAmount').value)
+      const cat    = document.getElementById('txCategory').value
+      const date   = document.getElementById('txDate').value
+
+      if (!desc)         { alert('Please enter a description.'); return }
+      if (!amount || amount <= 0) { alert('Please enter a valid amount.'); return }
+
+      const tx = { id: nextId++, type: currentType, desc, amount, cat, date }
+      transactions.unshift(tx)
+      save()
+      render()
+
+      // Reset form
+      document.getElementById('txDesc').value = ''
+      document.getElementById('txAmount').value = ''
+    }
+
+    // ── Delete ──
+    function deleteTx(id) {
+      transactions = transactions.filter(t => t.id !== id)
+      save()
+      render()
+    }
+
+    // ── Filter ──
+    function setFilter(filter, btn) {
+      currentFilter = filter
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+      renderList()
+    }
+
+    // ── Save ──
+    function save() {
+      try { localStorage.setItem('jg_budget', JSON.stringify(transactions)) } catch(e) {}
+    }
+
+    // ── Render all ──
+    function render() {
+      renderSummary()
+      renderList()
+      renderCategories()
+    }
+
+    function fmt(n) {
+      return 'KES ' + n.toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+    }
+
+    function renderSummary() {
+      const income  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0)
+      const expense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0)
+      const bal     = income - expense
+      const iCount  = transactions.filter(t => t.type === 'income').length
+      const eCount  = transactions.filter(t => t.type === 'expense').length
+
+      document.getElementById('totalIncome').textContent  = fmt(income)
+      document.getElementById('totalExpense').textContent = fmt(expense)
+      document.getElementById('balance').textContent      = fmt(Math.abs(bal))
+      document.getElementById('incomeCount').textContent  = `${iCount} transaction${iCount !== 1 ? 's' : ''}`
+      document.getElementById('expenseCount').textContent = `${eCount} transaction${eCount !== 1 ? 's' : ''}`
+
+      const balEl = document.getElementById('balance')
+      balEl.style.color = bal >= 0 ? 'var(--navy)' : 'var(--red)'
+      document.getElementById('balanceNote').textContent = bal >= 0
+        ? '✓ You\'re in budget'
+        : '⚠ Over budget by ' + fmt(Math.abs(bal))
+    }
+
+    function renderList() {
+      const list = document.getElementById('txList')
+      const filtered = transactions.filter(t =>
+        currentFilter === 'all' || t.type === currentFilter
+      )
+
+      if (filtered.length === 0) {
+        list.innerHTML = `<div class="empty-state"><div class="icon">💳</div><p>No ${currentFilter === 'all' ? '' : currentFilter + ' '}transactions yet.</p></div>`
+        return
+      }
+
+      list.innerHTML = filtered.map(tx => {
+        const icon = CAT_ICONS[tx.cat] || '💰'
+        const colorIdx = [...INCOME_CATS, ...EXPENSE_CATS].indexOf(tx.cat)
+        const color = CAT_COLORS[colorIdx % CAT_COLORS.length]
+        const sign = tx.type === 'income' ? '+' : '-'
+        const dateStr = tx.date ? new Date(tx.date + 'T00:00:00').toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
+        return `
+          <div class="tx-item">
+            <div class="tx-icon" style="background:${color}22;color:${color}">${icon}</div>
+            <div class="tx-main">
+              <div class="tx-desc">${tx.desc}</div>
+              <div class="tx-meta">${tx.cat} · ${dateStr}</div>
+            </div>
+            <div class="tx-amount ${tx.type}">${sign} ${fmt(tx.amount)}</div>
+            <button class="tx-del" onclick="deleteTx(${tx.id})" title="Delete">✕</button>
+          </div>
+        `
+      }).join('')
+    }
+
+    function renderCategories() {
+      const expenses = transactions.filter(t => t.type === 'expense')
+      if (expenses.length === 0) {
+        document.getElementById('catBreakdown').innerHTML = '<p style="font-size:0.8rem;color:var(--silver)">No expenses yet.</p>'
+        return
+      }
+
+      // Group by category
+      const totals = {}
+      expenses.forEach(t => { totals[t.cat] = (totals[t.cat] || 0) + t.amount })
+      const maxVal = Math.max(...Object.values(totals))
+
+      const sorted = Object.entries(totals).sort((a, b) => b[1] - a[1])
+      document.getElementById('catBreakdown').innerHTML = sorted.map(([cat, total], i) => {
+        const colorIdx = [...INCOME_CATS, ...EXPENSE_CATS].indexOf(cat)
+        const color = CAT_COLORS[colorIdx % CAT_COLORS.length]
+        const pct = (total / maxVal * 100).toFixed(1)
+        return `
+          <div class="cat-row">
+            <div class="cat-label">${CAT_ICONS[cat] || ''} ${cat}</div>
+            <div class="cat-bar-wrap">
+              <div class="cat-bar" style="width:${pct}%;background:${color}"></div>
+            </div>
+            <div class="cat-amount">${fmt(total)}</div>
+          </div>
+        `
+      }).join('')
+    }
+
+    // ── Init ──
+    populateCategories()
+
+    // Add sample data if empty
+    if (transactions.length === 0) {
+      const today = new Date().toISOString().split('T')[0]
+      transactions = [
+        { id: nextId++, type: 'income',  desc: 'Teaching Salary', amount: 35000, cat: 'Salary / Teaching', date: today },
+        { id: nextId++, type: 'income',  desc: 'Tutoring - Jane', amount: 3000,  cat: 'Tutoring Fees',    date: today },
+        { id: nextId++, type: 'expense', desc: 'House Rent',       amount: 12000, cat: 'Rent & Utilities', date: today },
+        { id: nextId++, type: 'expense', desc: 'Groceries',        amount: 4500,  cat: 'Food & Groceries', date: today },
+        { id: nextId++, type: 'expense', desc: 'Matatu fare',      amount: 1200,  cat: 'Transport',        date: today },
+      ]
+    }
+
+    render()
+  </script>
+
+</body>
+</html>
