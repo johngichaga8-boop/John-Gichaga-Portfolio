@@ -4,7 +4,7 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>CBC Learner Performance System</title>
-<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+ <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet"/>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -965,7 +965,7 @@ function clearMarks(){
 }
 function loadSample(){
   const subs=getActiveSubjects();
-  const samples=[58,72,65,55,80,70,63,74,68,78,85,60,55,72,66,77,73,68,98,90,82,88,69,71,64,79];
+  const samples=[58,72,65,55,80,70,63,74,68,78,85,60,55,72,66,77,73,68];
   subs.forEach((s,i)=>{const v=samples[i%samples.length];const inp=document.getElementById('mark-'+i);if(inp){inp.value=v;clampMark(i)}});
   if(!document.getElementById('inpName').value)document.getElementById('inpName').value='John Gichaga';
   updateLiveAvg();
@@ -1478,20 +1478,39 @@ function doGenerateTT(){
 function renderTTGrid(){
   if(!ST.timetable)return;
   const{sessions}=ST.timetable;
-  // Find max slots per day
-  const maxSlot=sessions.length?Math.max(...sessions.map(s=>s.slot))+1:0;
+  if(!sessions.length){document.getElementById('ttGrid').innerHTML='';return}
+
+  // Build a map: day -> sorted list of sessions by slotIdx
+  const dayMap={};
+  DAYS.forEach(d=>{dayMap[d]=sessions.filter(s=>s.day===d).sort((a,b)=>a.slot-b.slot)});
+
+  // The number of rows = max slots any single day has
+  const maxSlot=Math.max(...DAYS.map(d=>dayMap[d].length));
+
   const grid=document.getElementById('ttGrid');
+  // Header row: empty time column + day headers
   let html='<div></div>'+DAYS.map(d=>`<div class="tt-day-hd">${d.slice(0,3)}</div>`).join('');
-  for(let slot=0;slot<maxSlot;slot++){
-    const first=sessions.find(s=>s.slot===slot&&s.day===DAYS.find(d=>sessions.find(x=>x.day===d&&x.slot===slot)));
-    const anyFirst=sessions.find(s=>s.slot===slot);
-    html+=`<div class="tt-time">${anyFirst?.startTime||'—'}</div>`;
+
+  for(let row=0;row<maxSlot;row++){
+    // Time label: use the first day that actually has a session at this row
+    const anySession=DAYS.map(d=>dayMap[d][row]).find(Boolean);
+    html+=`<div class="tt-time">${anySession?.startTime||'—'}</div>`;
     DAYS.forEach(day=>{
-      const s=sessions.find(x=>x.day===day&&x.slot===slot);
-      if(s){const done=ST.tracking[s.key];html+=`<div class="tt-slot ${s.css}" onclick="toggleSlot('${s.key}',this)"><div class="tt-sn">${s.subject.split(' ')[0]}</div><div class="tt-dur">${s.startTime}–${s.endTime}</div><div class="tt-chk ${done?'done':''}">${done?'✓':''}</div></div>`}
-      else html+=`<div class="tt-slot empty">–</div>`;
+      const s=dayMap[day][row]; // undefined if this day has fewer slots
+      if(s){
+        const done=ST.tracking[s.key];
+        html+=`<div class="tt-slot ${s.css}" onclick="toggleSlot('${s.key}',this)">
+          <div class="tt-sn">${s.subject.split(' ')[0]}</div>
+          <div class="tt-dur">${s.startTime}–${s.endTime}</div>
+          <div class="tt-chk ${done?'done':''}">${done?'✓':''}</div>
+        </div>`;
+      } else {
+        // This day simply has no session for this row — show a blank
+        html+=`<div class="tt-slot empty">–</div>`;
+      }
     });
   }
+
   grid.innerHTML=html;
   const d=new Date();
   document.getElementById('ttWeekLabel').textContent=`Week of ${d.toLocaleDateString('en-KE',{month:'short',day:'numeric',year:'numeric'})}`;
