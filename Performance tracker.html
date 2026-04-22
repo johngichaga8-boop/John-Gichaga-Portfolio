@@ -419,7 +419,7 @@ tbody tr:hover{background:var(--sur2)}
     <div class="g2 mb5">
       <div class="card">
         <div class="card-title mb3">Learner Information</div>
-        <div class="fg"><label class="fl">Learner Name *</label><input type="text" class="fi" id="inpName" placeholder="e.g. Amara Wanjiku"/></div>
+        <div class="fg"><label class="fl">Learner Name *</label><input type="text" class="fi" id="inpName" placeholder="e.g. John Gichaga"/></div>
         <div class="frow">
           <div class="fg"><label class="fl">Grade</label><select class="fi" id="inpGrade"></select></div>
           <div class="fg"><label class="fl">Term</label><select class="fi" id="inpTerm"><option value="Term 1 — 2026">Term 1 — 2026</option><option value="Term 2 — 2026" selected>Term 2 — 2026</option><option value="Term 3 — 2026">Term 3 — 2026</option></select></div>
@@ -965,9 +965,9 @@ function clearMarks(){
 }
 function loadSample(){
   const subs=getActiveSubjects();
-  const samples=[58,72,65,55,80,70,63,74,68,78,85,60,55,72,66,77,73,68];
+  const samples=[58,72,65,55,80,70,63,74,68,78,85,60,55,72,66,77,73,68,98,90,82,88,69,71,64,79];
   subs.forEach((s,i)=>{const v=samples[i%samples.length];const inp=document.getElementById('mark-'+i);if(inp){inp.value=v;clampMark(i)}});
-  if(!document.getElementById('inpName').value)document.getElementById('inpName').value='Amara Wanjiku';
+  if(!document.getElementById('inpName').value)document.getElementById('inpName').value='John Gichaga';
   updateLiveAvg();
 }
 
